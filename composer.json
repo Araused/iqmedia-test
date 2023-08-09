@@ -1,0 +1,9 @@
+{
+    "name": "araused/mvc",
+    "autoload": {
+        "psr-4": {
+            "app\\": "./"
+        }
+    },
+    "require": {}
+}
