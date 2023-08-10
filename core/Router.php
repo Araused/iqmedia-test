@@ -14,16 +14,29 @@ class Router
         $this->request = new Request();
     }
 
+    /**
+     * @param $path
+     * @param $callback
+     * @return void
+     */
     public function get($path, $callback)
     {
         $this->routes['get'][$path] = $callback;
     }
 
+    /**
+     * @param $path
+     * @param $callback
+     * @return void
+     */
     public function post($path, $callback)
     {
         $this->routes['post'][$path] = $callback;
     }
 
+    /**
+     * @return false|mixed|string
+     */
     public function resolve()
     {
         $path = $this->request->getPath();
@@ -31,7 +44,6 @@ class Router
         $callback = $this->routes[$method][$path] ?? false;
 
         if ($callback === false) {
-            var_dump($method, $path, $this->routes);
             return "404";
         }
 
