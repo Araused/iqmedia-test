@@ -9,11 +9,16 @@ class Application
 {
     public Router $router;
     public View $view;
+    public Model $model;
+    protected array $config;
 
     public function __construct()
     {
+        $this->config = require dirname(__DIR__) . '/config.php';
+
         $this->router = new Router();
         $this->view = new View();
+        $this->model = new Model($this->config['db'] ?? []);
     }
 
     /**
@@ -72,15 +77,16 @@ class Application
         });
 
         $this->router->get('/go', function () {
-            $key = $_GET['q'] ?? null;
+            $hash = $_GET['q'] ?? null;
+            $data = $this->model->findByHash($hash);
 
-            if (empty($url)) {
+            if (empty($data)) {
                 return $this->renderError();
             }
 
-            //@TODO logic
-
-            return "Update counter & redirect user...";
+            $this->model->updateCounterByHash($hash);
+            header("Location: {$data['landing']}");
+            die();
         });
     }
 
