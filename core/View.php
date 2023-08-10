@@ -7,6 +7,8 @@ class View
     const VIEWS_PATH = '/core/views/';
 
     public array $properties;
+    public ?string $layout = null;
+    public ?string $title = '';
 
     public function __construct()
     {
@@ -16,10 +18,11 @@ class View
     /**
      * @param string $viewFile
      * @param array $properties
+     * @param bool $useLayout
      * @throws Exception
      * @return false|string
      */
-    public function render(string $viewFile, array $properties = [])
+    public function render(string $viewFile, array $properties = [], bool $useLayout = true)
     {
         $path = dirname(__DIR__) . self::VIEWS_PATH;
         $template = $path . $viewFile;
@@ -31,7 +34,14 @@ class View
         ob_start();
         $this->properties = $properties;
         include($template);
-        return ob_get_clean();
+        $result = ob_get_clean();
+
+        return !($useLayout && $this->layout !== null)
+            ? $result
+            : $this->render($this->layout, [
+                'title' => $this->title,
+                'content' => $result,
+            ], false);
     }
 
     /**

@@ -19,6 +19,8 @@ class Application
         $this->router = new Router();
         $this->view = new View();
         $this->model = new Model($this->config['db'] ?? []);
+
+        $this->view->layout = $this->config['view']['layout'];
     }
 
     /**
@@ -46,10 +48,8 @@ class Application
     private function initRoutes()
     {
         $this->router->get('/', function () {
-            echo $this->view->render('layout.php', [
-                'title' => 'Главная страница',
-                'content' => $this->view->render('_index.php'),
-            ]);
+            $this->view->title = 'Главная страница';
+            echo $this->view->render('_index.php');
         });
 
         $this->router->post('/create-shortlink', function () {
@@ -65,7 +65,7 @@ class Application
                 'full' => $data['landing'],
                 'short' => $this->model->getShortlinkFromHash($data['hash']),
                 'secret' => $this->model->getStatsLinkFromHash($data['hash']),
-            ]);
+            ], false);
         });
 
         $this->router->get('/stat', function () {
@@ -76,14 +76,11 @@ class Application
                 return $this->renderError();
             }
 
-            //@TODO аж у самого глаза болят... надо рекурсивный рендер убрать во View
-            echo $this->view->render('layout.php', [
-                'title' => 'Статистика',
-                'content' => $this->view->render('_stat.php', [
-                    'full' => $data['landing'],
-                    'short' => $this->model->getShortlinkFromHash($data['hash']),
-                    'counter' => $data['counter'],
-                ]),
+            $this->view->title = 'Статистика';
+            echo $this->view->render('_stat.php', [
+                'full' => $data['landing'],
+                'short' => $this->model->getShortlinkFromHash($data['hash']),
+                'counter' => $data['counter'],
             ]);
         });
 
@@ -107,9 +104,9 @@ class Application
      */
     public function renderError()
     {
+        $this->view->title = 'Ошибка';
         echo $this->view->render('layout.php', [
-            'title' => 'Ошибка',
             'content' => 'Страница не найдена. Попробуйте проверить URL запроса.',
-        ]);
+        ], false);
     }
 }
