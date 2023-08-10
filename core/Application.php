@@ -65,15 +65,22 @@ class Application
         });
 
         $this->router->get('/stat', function () {
-            $key = $_GET['key'] ?? null;
+            $key = $_GET['key'] ?? '';
+            $data = $this->model->findBySecretKey($key);
 
-            if (empty($url)) {
+            if (empty($data)) {
                 return $this->renderError();
             }
 
-            //@TODO logic
-
-            return "Render stat page...";
+            //@TODO аж у самого глаза болят... надо рекурсивный рендер убрать во View
+            echo $this->view->render('layout.php', [
+                'title' => 'Статистика',
+                'content' => $this->view->render('_stat.php', [
+                    'full' => $data['landing'],
+                    'short' => $this->model->getShortlinkFromHash($data['hash']),
+                    'counter' => $data['counter'],
+                ]),
+            ]);
         });
 
         $this->router->get('/go', function () {

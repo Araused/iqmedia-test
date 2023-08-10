@@ -14,11 +14,12 @@ class View
     }
 
     /**
-     * @param $viewFile
+     * @param string $viewFile
+     * @param array $properties
      * @throws Exception
      * @return false|string
      */
-    public function render($viewFile, array $properties = [])
+    public function render(string $viewFile, array $properties = [])
     {
         $path = dirname(__DIR__) . self::VIEWS_PATH;
         $template = $path . $viewFile;
