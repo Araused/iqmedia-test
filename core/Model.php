@@ -7,7 +7,10 @@ use mysqli;
 class Model
 {
     const MIN_HASH_LEN = 2;
-    const LINK_PREFIX = '/go?q=';
+    const INCREASE_LEN_STEP = 5;
+    const LINK_PREFIX_GO = '/go?q=';
+    const LINK_PREFIX_STATS = '/stat?key=';
+    const ALLOWED_CHARS_FOR_HASH = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
     protected mysqli $connection;
 
@@ -29,12 +32,45 @@ class Model
     }
 
     /**
+     * @param integer $strength
+     * @return string
+     */
+    public function getRandomString(int $strength = self::MIN_HASH_LEN): string
+    {
+        $charsLib = self::ALLOWED_CHARS_FOR_HASH;
+        $inputLength = strlen($charsLib);
+        $result = '';
+
+        for ($i = 0; $i < $strength; $i++) {
+            $randomChar = $charsLib[mt_rand(0, $inputLength - 1)];
+            $result .= $randomChar;
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param int|null $len
+     * @param int $step
      * @throws Exception
      * @return string
      */
-    public function generateHash(): string
+    public function generateHash(?int $len = null, int $step = 0): string
     {
-        return '';
+        if ($len === null) {
+            $len = self::MIN_HASH_LEN;
+        }
+
+        $result = $this->getRandomString($len);
+
+        if ($this->findByHash($result) !== null) {
+            return $this->generateHash(
+                $step < self::INCREASE_LEN_STEP ? $len : $len + 1,
+                $step < self::INCREASE_LEN_STEP ? $step : 0
+            );
+        }
+
+        return $result;
     }
 
     /**
@@ -94,7 +130,16 @@ class Model
      */
     public function getShortlinkFromHash(string $hash): string
     {
-        return '//' . $_SERVER['SERVER_NAME'] . self::LINK_PREFIX . $hash;
+        return '//' . $_SERVER['SERVER_NAME'] . self::LINK_PREFIX_GO . $hash;
+    }
+
+    /**
+     * @param string $hash
+     * @return string
+     */
+    public function getStatsLinkFromHash(string $hash): string
+    {
+        return '//' . $_SERVER['SERVER_NAME'] . self::LINK_PREFIX_STATS . $this->getSecretKeyFromHash($hash);
     }
 
     /**
@@ -103,6 +148,17 @@ class Model
      */
     public function generateNew(string $url): array
     {
-        return [];
+        $hash = $this->generateHash();
+        $url = $this->connection->real_escape_string($url);
+
+//        var_dump("insert into `link` ('hash', 'landing', 'counter') values ('{$hash}', '{$url}', 0)");die;
+        $result = $this
+            ->connection
+            ->query("insert into `link` (`hash`, `landing`) values ('{$hash}', '{$url}')");
+
+        return $result ? [
+            'hash' => $hash,
+            'landing' => $url,
+        ] : [];
     }
 }

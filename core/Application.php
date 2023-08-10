@@ -52,16 +52,20 @@ class Application
             ]);
         });
 
-        $this->router->post('/new-shortlink', function () {
+        $this->router->post('/create-shortlink', function () {
             $url = $_GET['url'] ?? null;
 
             if (empty($url)) {
                 return $this->renderError();
             }
 
-            //@TODO logic
+            $data = $this->model->generateNew($url);
 
-            return "Render some html with result...";
+            echo $this->view->render('_ajax-shortlink.php', [
+                'full' => $data['landing'],
+                'short' => $this->model->getShortlinkFromHash($data['hash']),
+                'secret' => $this->model->getStatsLinkFromHash($data['hash']),
+            ]);
         });
 
         $this->router->get('/stat', function () {
